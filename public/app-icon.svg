@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="cat meow lab icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#85b7de"/>
+      <stop offset="100%" stop-color="#0a95ff"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef6ff"/>
+      <stop offset="100%" stop-color="#bddbff"/>
+    </linearGradient>
+    <linearGradient id="wig" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#c6ced8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="56" fill="url(#bg)"/>
+  <rect x="183" y="28" width="146" height="60" rx="14" fill="#26364a" opacity="0.92"/>
+  <text x="256" y="70" font-size="44" text-anchor="middle" fill="#ffffff" font-family="sans-serif">畜生</text>
+
+  <ellipse cx="256" cy="306" rx="150" ry="118" fill="url(#fur)"/>
+  <path d="M108 284 Q130 192 210 176 Q256 168 302 176 Q382 192 404 284 Q358 236 310 222 Q256 208 202 222 Q154 236 108 284 Z" fill="#d9ecff"/>
+
+  <ellipse cx="200" cy="300" rx="24" ry="14" fill="#d6b95a"/>
+  <ellipse cx="312" cy="300" rx="24" ry="14" fill="#d6b95a"/>
+  <ellipse cx="200" cy="300" rx="12" ry="12" fill="#7dd651"/>
+  <ellipse cx="312" cy="300" rx="12" ry="12" fill="#7dd651"/>
+  <path d="M240 348 Q256 360 272 348 Q256 338 240 348 Z" fill="#96c2f2"/>
+
+  <path d="M146 154 Q164 92 256 84 Q348 92 366 154 Q374 196 350 226 Q320 262 256 264 Q192 262 162 226 Q138 196 146 154 Z" fill="url(#wig)"/>
+  <path d="M166 150 Q192 122 256 118 Q320 122 346 150" stroke="#adb7c2" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M152 192 Q188 152 256 146 Q324 152 360 192" stroke="#b8c1cb" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M138 236 Q178 192 256 186 Q334 192 374 236" stroke="#c5ccd4" stroke-width="8" fill="none" stroke-linecap="round"/>
+</svg>

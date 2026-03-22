@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>ミッケ</title>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --panel: #101f37;
+      --text: #eef6ff;
+      --muted: #9ab3cb;
+      --ok: #22c55e;
+      --ng: #ef4444;
+      --accent: #4f7dff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: transparent; color: var(--text); font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; }
+    .bg-shuffle {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: none;
+      transform: none;
+      opacity: 1;
+      transition: background-image 120ms linear;
+    }
+    .app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+    .hud {
+      background: transparent;
+      border-bottom: none;
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .chip {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: .84rem;
+      color: #e6f1ff;
+      font-variant-numeric: tabular-nums;
+    }
+    .stage-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      min-height: 0;
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 2550 / 3508;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: none;
+      background: transparent;
+      cursor: crosshair;
+      user-select: none;
+      touch-action: none;
+    }
+    .stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
+    .mission {
+      background: transparent;
+      border-top: none;
+      padding: 12px 14px 18px;
+      min-height: 95px;
+    }
+    .mission-no { font-size: .72rem; letter-spacing: .14em; color: #8eb8ff; margin: 0 0 6px; }
+    .mission-text { margin: 0; font-size: 1.06rem; font-weight: 700; line-height: 1.42; }
+    .hint { margin-top: 6px; color: #fbbf24; font-size: .87rem; }
+    .success { color: #89f0b0; font-weight: 700; }
+    .found {
+      position: absolute;
+      border: 3px solid var(--ok);
+      border-radius: 8px;
+      background: rgba(34,197,94,.2);
+      box-shadow: 0 0 0 4px rgba(34,197,94,.22);
+      pointer-events: none;
+      display: none;
+    }
+    .ripple {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple .7s ease-out forwards;
+      pointer-events: none;
+    }
+    .ripple.ok { border: 2px solid rgba(34,197,94,.9); background: rgba(34,197,94,.25); }
+    .ripple.ng { border: 2px solid rgba(239,68,68,.9); background: rgba(239,68,68,.2); }
+    @keyframes ripple {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="bgShuffle" class="bg-shuffle" aria-hidden="true"></div>
+  <div class="app">
+    <div class="stage-wrap">
+      <div id="stage" class="stage" aria-label="クエストステージ">
+        <img src="/mike/image-1774084821162.png" alt="石ころが集まった写真">
+        <div id="found" class="found"></div>
+      </div>
+    </div>
+    <div class="mission">
+      <p id="missionNo" class="mission-no">MISSION 1</p>
+      <p id="missionText" class="mission-text"></p>
+      <p id="hint" class="hint hidden"></p>
+      <p id="status" class="hint"></p>
+    </div>
+  </div>
+  <audio id="bgm" preload="auto" loop autoplay playsinline webkit-playsinline="true"></audio>
+  <script>
+    window.onload = function() {
+      const bgShuffle = document.getElementById("bgShuffle");
+      const bgm = document.getElementById("bgm");
+      const stage = document.getElementById("stage");
+      const found = document.getElementById("found");
+      const missionNo = document.getElementById("missionNo");
+      const missionText = document.getElementById("missionText");
+      const hint = document.getElementById("hint");
+      const status = document.getElementById("status");
+      const timeChip = document.getElementById("timeChip");
+      const progressChip = document.getElementById("progressChip");
+      const accChip = document.getElementById("accChip");
+      const BGM_SRC = "/mike/%E3%81%BF%E3%81%A3%E3%81%91%2002262258.wav";
+      const BGM_VOLUME = 0.45;
+      const regions = [
+        { id: "top-left-chip", left: 10.2, top: 2.6, w: 13.8, h: 10.4 },
+        { id: "mid-left-clear", left: 24.6, top: 15.2, w: 20.3, h: 16.2 },
+        { id: "top-right-big", left: 56.2, top: 15.5, w: 27.4, h: 18.8 },
+        { id: "upper-right-chip", left: 82.5, top: 16.6, w: 10.8, h: 7.8 },
+        { id: "left-round", left: 8.2, top: 30.8, w: 17.6, h: 13.8 },
+        { id: "center-blur", left: 35.7, top: 39.2, w: 15.4, h: 17.2 },
+        { id: "mid-right-round", left: 54.2, top: 40.2, w: 16.6, h: 12.6 },
+        { id: "bottom-right-blue", left: 51.6, top: 56.8, w: 24.6, h: 18.6 },
+        { id: "lower-left-long", left: 16.4, top: 67.4, w: 27.2, h: 16.8 },
+        { id: "bottom-center-red", left: 44.2, top: 82.4, w: 12.8, h: 10.6 },
+        { id: "bottom-right-shell", left: 80.4, top: 84.4, w: 18.8, h: 12.0 },
+      ];
+      // 背景クリックで画像切り替え
+      if (bgShuffle) {
+        bgShuffle.style.pointerEvents = "auto";
+        bgShuffle.title = "クリックで背景チェンジ";
+        bgShuffle.addEventListener("click", rotateBackground);
+      }
+      const quests = [
+        { text: "一番丸い石を見つけよう！", targetId: "left-round", hint: "左の方の明るく丸い石", ok: "正解！" },
+        { text: "右上にある欠けた小石を探せ！", targetId: "upper-right-chip", hint: "右上のすみ", ok: "見つけた！" },
+        { text: "青みのある大きな石はどこ？", targetId: "bottom-right-blue", hint: "右下の青っぽい石", ok: "その石です！" },
+        { text: "白くて横に長い石を見つけよう！", targetId: "lower-left-long", hint: "左下の長い石", ok: "大正解！" },
+        { text: "赤みがかった小さい石はどれ？", targetId: "bottom-center-red", hint: "写真下の小石", ok: "正解！" },
+        { text: "貝みたいな形の石を探せ！", targetId: "bottom-right-shell", hint: "右下のすみ", ok: "クリア！" },
+      ];
+      let idx = 0;
+      let misses = 0;
+      let totalMisses = 0;
+      let startedAt = 0;
+      let timer = null;
+      let active = false;
+      let bgmReady = false;
+      const bgImages = [
+        "/mike/back/IMG_0369.JPG",
+        "/mike/back/IMG_0714.jpeg",
+        "/mike/back/IMG_0898.jpeg",
+        "/mike/back/IMG_1231.JPG",
+        "/mike/back/IMG_1419.JPG",
+        "/mike/back/IMG_1583.jpeg",
+        "/mike/back/IMG_2803.JPG",
+        "/mike/back/IMG_2806.JPG",
+        "/mike/back/IMG_2808.JPG",
+        "/mike/back/IMG_2809.JPG",
+        "/mike/back/IMG_2813.JPG",
+        "/mike/back/IMG_2815.JPG",
+        "/mike/back/IMG_3613.jpeg",
+      ];
+      let lastBgIdx = -1;
+      function pickRandomBgIdx() {
+        if (bgImages.length < 2) return 0;
+        let idx = Math.floor(Math.random() * bgImages.length);
+        while (idx === lastBgIdx) idx = Math.floor(Math.random() * bgImages.length);
+        return idx;
+      }
+      function rotateBackground() {
+        if (!bgShuffle) return;
+        const idx = pickRandomBgIdx();
+        lastBgIdx = idx;
+        bgShuffle.style.backgroundImage = `url('${bgImages[idx]}')`;
+      }
+      function currentQuest() { return quests[idx]; }
+      function currentRegion() {
+        const q = currentQuest();
+        return regions.find(r => r.id === q.targetId);
+      }
+      function render() {
+        const q = currentQuest();
+        missionNo.textContent = q ? q.text : "全問クリア！";
+        missionText.textContent = q ? q.text : "全問クリア！";
+      }
+      function formatTime(sec) {
+        const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+        const ss = String(sec % 60).padStart(2, "0");
+        return `${mm}:${ss}`;
+      }
+      function startGame() {
+        startBgm();
+        idx = 0;
+        misses = 0;
+        totalMisses = 0;
+        active = true;
+        hint.classList.add("hidden");
+        status.textContent = "";
+        found.style.display = "none";
+        startedAt = Date.now();
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => {
+          timeChip.textContent = formatTime(Math.floor((Date.now() - startedAt) / 1000));
+        }, 250);
+        render();
+      }
+      function startBgm() {
+        if (!bgm) return;
+        if (!bgmReady) {
+          bgm.src = BGM_SRC;
+          bgm.volume = BGM_VOLUME;
+          bgmReady = true;
+        }
+        const p = bgm.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(() => {});
+        }
+      }
+      function tryStartBgmImmediately() { startBgm(); }
+      function showFound(region) {
+        found.style.left = `${region.left}%`;
+        found.style.top = `${region.top}%`;
+        found.style.width = `${region.w}%`;
+        found.style.height = `${region.h}%`;
+        found.style.display = "block";
+      }
+      function addRipple(x, y, ok) {
+        const d = document.createElement("div");
+        d.className = `ripple ${ok ? "ok" : "ng"}`;
+        d.style.left = `${x}%`;
+        d.style.top = `${y}%`;
+        stage.appendChild(d);
+        setTimeout(() => d.remove(), 760);
+      }
+      function onStagePointer(e) {
+        if (!active) return;
+        e.preventDefault();
+        // 背景も切り替える
+        rotateBackground();
+        const rect = stage.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        const r = currentRegion();
+        const hit = x >= r.left && x <= r.left + r.w && y >= r.top && y <= r.top + r.h;
+        addRipple(x, y, hit);
+        if (hit) {
+          showFound(r);
+          status.classList.add("success");
+          status.textContent = currentQuest().ok;
+          setTimeout(() => {
+            found.style.display = "none";
+            status.classList.remove("success");
+            status.textContent = "";
+            idx += 1;
+            misses = 0;
+            hint.classList.add("hidden");
+            if (idx >= quests.length) {
+              active = false;
+              clearInterval(timer);
+              missionNo.textContent = "QUEST CLEAR!";
+              missionText.textContent = "全問クリア！下のボタンで再挑戦してね。";
+              status.textContent = "もう一度プレイするには、画面上部を再読み込みしてください。";
+              return;
+            }
+            render();
+          }, 850);
+        } else {
+          misses += 1;
+          totalMisses += 1;
+          status.textContent = "ちがうかも。もう一回！";
+          if (misses >= 3) {
+            hint.textContent = `ヒント: ${currentQuest().hint}`;
+            hint.classList.remove("hidden");
+          }
+        }
+        // ページロード直後にもBGM再生を強制的に試みる
+        startBgm();
+      }
+      stage.addEventListener("pointerdown", onStagePointer);
+      window.addEventListener("load", tryStartBgmImmediately);
+      window.addEventListener("pageshow", tryStartBgmImmediately);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          tryStartBgmImmediately();
+        }
+      });
+      rotateBackground();
+      render();
+      startGame();
+    }
+  </script>
+  <!-- アクセスURL案内 -->
+  <!-- ローカル: http://localhost:3000/mikke-quest.html -->
+  <!-- Vercel等: https://[your-app].vercel.app/mikke-quest.html -->
+</body>
+</html>

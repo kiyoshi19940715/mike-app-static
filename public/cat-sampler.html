@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>CATCH ME IF YOU CAN</title>
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/ds-fette-gotisch');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            --bg-scale: 1;
+            --bg-image: url('/IMG_2813.jpg');
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: var(--bg-image, url('/IMG_2813.jpg'));
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transform: scale(var(--bg-scale));
+            transform-origin: center center;
+            transition: transform 0.18s linear;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.08s ease;
+        }
+
+        body.flash-white::after {
+            opacity: 1;
+        }
+
+        .container {
+            max-width: 36rem;
+            width: 100%;
+            background: transparent;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: none;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-weight: 400;
+            font-family: 'DS Fette Gotisch', 'Times New Roman', serif;
+            text-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+            display: inline-block;
+            transform: scaleY(1.08);
+            transform-origin: center;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .cat-container {
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .cat-button {
+            width: 280px;
+            height: 280px;
+            min-width: 280px;
+            min-height: 280px;
+            margin: 0 auto;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+            box-shadow: none;
+        }
+
+        .cat-button:active {
+            transform: scale(0.95);
+            background: transparent;
+        }
+
+        .cat-image {
+            max-width: 248px;
+            max-height: 248px;
+            object-fit: cover;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .cat-image.playing {
+            transform: scale(1.08);
+        }
+
+        .cat-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .stats {
+            background: transparent;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            color: white;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+            margin-bottom: 10px;
+            font-family: 'DS Fette Gotisch', 'Times New Roman', serif;
+            font-weight: 400;
+            letter-spacing: 0.03em;
+        }
+
+        .count {
+            font-size: 2.7rem;
+            font-weight: 400;
+            font-family: 'DS Fette Gotisch', 'Times New Roman', serif;
+            display: inline-block;
+            transform: scaleY(1.08);
+            transform-origin: center;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .stopwatch {
+            margin-top: 10px;
+            color: #ecf0f1;
+            font-family: 'DS Fette Gotisch', 'Times New Roman', serif;
+            font-weight: 400;
+            font-size: 1.1rem;
+            letter-spacing: 0.03em;
+        }
+
+        .unlock-command {
+            margin-top: 12px;
+            color: #ffffff;
+            font-family: 'DS Fette Gotisch', 'Times New Roman', serif;
+            font-size: 1.05rem;
+            display: none;
+            text-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            h1 { font-size: 2rem; }
+            .cat-button { width: 240px; height: 240px; min-width: 240px; min-height: 240px; }
+            .cat-image { max-width: 208px; max-height: 208px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-title">CATCH ME IF YOU CAN</h1>
+
+        <div class="cat-container">
+            <div class="cat-button" id="cat-button">
+                <img id="cat-image" class="cat-image" src="/main3.jpg" alt="ウィッグ猫" />
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="count" id="play-count">0</div>
+            <div class="stopwatch" id="stopwatch">TIME 60.00 / LEFT 300</div>
+            <div class="unlock-command" id="unlock-command">NEW COMMAND UNLOCKED: SUCCESS</div>
+        </div>
+
+        <div class="footer">
+            © 2026 Cat Meow Lab - Pure HTML Version
+        </div>
+    </div>
+
+    <script>
+        const SPECIAL_EVERY = 10;
+        const CLICK_COOLDOWN_MS = 30;
+        const PLAY_LOCK_MS = 85;
+        const MILESTONE_IMAGE_MS = 200;
+        const soundSpecial = '/sounds/cat_special_pcm.wav';
+        const sound30 = '/sounds/cat_30.wav';
+        const sound40 = '/sounds/cat_40.wav';
+        const sound50 = '/sounds/cat_50.wav';
+        const soundNormal = '/sounds/cat_custom_pcm.wav';
+        const TIME_ATTACK_MS = 60000;
+        const TIME_ATTACK_TARGET = 300;
+        const defaultBackgroundImage = '/IMG_2813.jpg';
+        const post200BackgroundImage = '/back5.jpg';
+        const successBackgroundImage = '/back6.JPG';
+        const defaultIdleImage = '/main3.jpg';
+        const post200IdleImage = '/main.jpg';
+        const post300IdleImage = '/cat_hit.png';
+
+        const hitImage = '/cat_hit.png';
+        const milestoneImageMap = {
+            30: '/chika30.jpeg',
+            40: '/40.jpg',
+            50: '/50.PNG',
+            250: '/250.jpg',
+            260: '/zoom.JPG',
+            270: '/zoom.JPG',
+            280: '/zoom.JPG'
+        };
+        const cyclingBackgrounds = [
+            '/１.JPG',
+            '/２.JPG',
+            '/３.jpeg',
+            '/４.jpeg',
+            '/５.JPG',
+            '/６.png',
+            '/７.png',
+            '/８.jpg',
+            '/９.jpg',
+            '/１０.jpg',
+            '/１１.jpeg',
+            '/１２.jpeg',
+            '/１３.jpeg',
+            '/１４.JPG',
+            '/１５.JPG',
+            '/１６.jpeg',
+            '/１７.jpeg',
+            '/１８.jpeg',
+            '/１９.JPG'
+        ];
+        const SOUND_SOURCES = {
+            normal: soundNormal,
+            special: soundSpecial,
+            m30: sound30,
+            m40: sound40,
+            m50: sound50,
+            c250: '/sounds/２５０_1.wav',
+            c251: '/sounds/２５１_1.wav',
+            c252: '/sounds/２５２_1.wav',
+            c253: '/sounds/２５３_1.wav',
+            c254: '/sounds/２５４_1.wav',
+            c256: '/sounds/２５６_1.wav',
+            c257: '/sounds/２５７_1.wav',
+            c258: '/sounds/２５８_1.wav',
+            c257_259: '/sounds/２ E~ 04191253.2.wav',
+            c281_299: '/sounds/２ E~ 04191253.2.wav',
+            c300: '/sounds/２５９２９９_1.wav',
+            c301plus: '/sounds/１ E~ 04191253.wav'
+        };
+
+        // 猫データ
+        const cats = [
+            { name: 'ウィッグ猫', image: defaultIdleImage, sound: '/sounds/cat_custom_pcm.wav' },
+            { name: '素猫', image: '/cat_plain.svg', sound: '/sounds/cat_custom_pcm.wav' }
+        ];
+
+        // 状態
+        let currentCat = 0;
+        let playCount = 0;
+        let isPlaying = false;
+        let playingResetTimer = null;
+        let lastPlayTime = 0;
+        let lastPointerCatAt = 0;
+        let attackStartedAt = 0;
+        let attackTapCount = 0;
+        let attackActive = false;
+        let attackUnlocked = false;
+        let attackFailed = false;
+        let attackTicker = null;
+        let audioContext = null;
+        const audioBuffers = {};
+
+        // DOM要素
+        const mainTitle = document.getElementById('main-title');
+        const catImage = document.getElementById('cat-image');
+        const playCountElement = document.getElementById('play-count');
+        const stopwatch = document.getElementById('stopwatch');
+        const unlockCommand = document.getElementById('unlock-command');
+        const catButton = document.getElementById('cat-button');
+
+        function formatSeconds(ms) {
+            return (ms / 1000).toFixed(2);
+        }
+
+        function renderTimeAttack(now) {
+            if (attackUnlocked) {
+                stopwatch.textContent = 'TIME 0.00 / LEFT 0';
+                return;
+            }
+
+            if (attackFailed) {
+                const leftTaps = Math.max(0, TIME_ATTACK_TARGET - attackTapCount);
+                stopwatch.textContent = `TIME 0.00 / LEFT ${leftTaps}`;
+                return;
+            }
+
+            const leftTaps = Math.max(0, TIME_ATTACK_TARGET - attackTapCount);
+            if (!attackActive) {
+                stopwatch.textContent = `TIME 60.00 / LEFT ${TIME_ATTACK_TARGET}`;
+                return;
+            }
+
+            const elapsed = now - attackStartedAt;
+            const remain = Math.max(0, TIME_ATTACK_MS - elapsed);
+            stopwatch.textContent = `TIME ${formatSeconds(remain)} / LEFT ${leftTaps}`;
+
+            if (remain <= 0) {
+                failTimeAttack();
+            }
+        }
+
+        function startTimeAttack(now) {
+            if (attackUnlocked || attackFailed) {
+                return;
+            }
+
+            attackStartedAt = now;
+            attackTapCount = 0;
+            attackActive = true;
+            if (attackTicker) {
+                clearInterval(attackTicker);
+            }
+            attackTicker = setInterval(() => {
+                renderTimeAttack(Date.now());
+            }, 40);
+            renderTimeAttack(now);
+        }
+
+        function stopTimeAttackTicker() {
+            attackActive = false;
+            if (attackTicker) {
+                clearInterval(attackTicker);
+                attackTicker = null;
+            }
+        }
+
+        function getIdleCatImage() {
+            if (attackUnlocked) {
+                return defaultIdleImage;
+            }
+            if (attackFailed) {
+                return defaultIdleImage;
+            }
+            if (playCount >= 100 && playCount < 300) {
+                return post200IdleImage;
+            }
+            return defaultIdleImage;
+        }
+
+        function getTapImageForCount(count) {
+            if (attackUnlocked) {
+                return defaultIdleImage;
+            }
+
+            if (attackFailed) {
+                return defaultIdleImage;
+            }
+
+            // exact match (30, 40, 50, 250, 260, 270, 280)
+            if (milestoneImageMap[count]) {
+                return milestoneImageMap[count];
+            }
+
+            // repeating cycles: multiples of 30/40/50
+            const mtype = getMilestoneType(count);
+            if (mtype === 30 || mtype === 40 || mtype === 50) {
+                return milestoneImageMap[mtype];
+            }
+
+            if (count >= 300) {
+                return post300IdleImage;
+            }
+
+            return hitImage;
+        }
+
+        function getBackgroundImageForState() {
+            if (attackUnlocked) {
+                return successBackgroundImage;
+            }
+            if (attackFailed) {
+                return defaultBackgroundImage;
+            }
+            if (playCount >= 100) {
+                const idx = (playCount - 100) % cyclingBackgrounds.length;
+                return cyclingBackgrounds[idx];
+            }
+            return defaultBackgroundImage;
+        }
+
+        function applyBackgroundImage() {
+            document.body.style.setProperty('--bg-image', `url('${getBackgroundImageForState()}')`);
+        }
+
+        function applyIdleCatImage() {
+            catImage.src = getIdleCatImage();
+        }
+
+        function failTimeAttack() {
+            if (attackUnlocked || attackFailed) {
+                return;
+            }
+
+            attackFailed = true;
+            stopTimeAttackTicker();
+            applyBackgroundImage();
+            renderTimeAttack(Date.now());
+        }
+
+        function unlockTimeAttack() {
+            attackUnlocked = true;
+            stopTimeAttackTicker();
+            unlockCommand.style.display = 'block';
+            mainTitle.textContent = 'success';
+            applyIdleCatImage();
+            applyBackgroundImage();
+            renderTimeAttack(Date.now());
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                navigator.vibrate([35, 20, 70]);
+            }
+            document.body.classList.add('flash-white');
+            setTimeout(() => {
+                document.body.classList.remove('flash-white');
+            }, 120);
+        }
+
+        function registerTap(now) {
+            if (attackUnlocked || attackFailed) {
+                return;
+            }
+
+            if (!attackActive) {
+                startTimeAttack(now);
+            }
+
+            if (now - attackStartedAt >= TIME_ATTACK_MS) {
+                failTimeAttack();
+                return;
+            }
+
+            attackTapCount += 1;
+            renderTimeAttack(now);
+
+            if (!attackUnlocked && attackTapCount >= TIME_ATTACK_TARGET && now - attackStartedAt <= TIME_ATTACK_MS) {
+                unlockTimeAttack();
+            }
+        }
+        function updateBackgroundScale(count) {
+            if (count <= 0 || count >= 100) {
+                document.body.style.setProperty('--bg-scale', '1');
+                return;
+            }
+            // 1〜99回目のみ: 1クリックずつ拡大
+            const scale = 1 + (0.18 / 25) * count;
+            document.body.style.setProperty('--bg-scale', String(scale));
+        }
+
+        function createAudio(src) {
+            const audio = new Audio(src);
+            audio.preload = 'auto';
+            audio.volume = 1.0;
+            audio.setAttribute('playsinline', 'true');
+            audio.load();
+            return audio;
+        }
+
+        function ensureAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().catch(() => {});
+            }
+            return audioContext;
+        }
+
+        async function preloadAudioBuffers() {
+            const context = ensureAudioContext();
+            const entries = Object.entries(SOUND_SOURCES);
+            for (const [key, src] of entries) {
+                try {
+                    const response = await fetch(src);
+                    const data = await response.arrayBuffer();
+                    const buffer = await context.decodeAudioData(data.slice(0));
+                    audioBuffers[key] = buffer;
+                } catch {
+                    // Keep HTMLAudioElement fallback when decode fails.
+                }
+            }
+        }
+
+        // 音声要素
+        const audioElements = {
+            normal: createAudio(soundNormal),
+            special: createAudio(soundSpecial),
+            m30: createAudio(sound30),
+            m40: createAudio(sound40),
+            m50: createAudio(sound50),
+            c250: createAudio('/sounds/２５０_1.wav'),
+            c251: createAudio('/sounds/２５１_1.wav'),
+            c252: createAudio('/sounds/２５２_1.wav'),
+            c253: createAudio('/sounds/２５３_1.wav'),
+            c254: createAudio('/sounds/２５４_1.wav'),
+            c256: createAudio('/sounds/２５６_1.wav'),
+            c257: createAudio('/sounds/２５７_1.wav'),
+            c258: createAudio('/sounds/２５８_1.wav'),
+            c257_259: createAudio('/sounds/２ E~ 04191253.2.wav'),
+            c281_299: createAudio('/sounds/２ E~ 04191253.2.wav'),
+            c300: createAudio('/sounds/２５９２９９_1.wav'),
+            c301plus: createAudio('/sounds/１ E~ 04191253.wav')
+        };
+
+        function getMilestoneType(count) {
+            if (count === 280) return 280;
+            if (count === 270) return 270;
+            if (count === 260) return 260;
+            if (count === 250) return 250;
+            if (count % 50 === 0) return 50;
+            if (count % 40 === 0) return 40;
+            if (count % 30 === 0) return 30;
+            return 0;
+        }
+
+        function getSoundKeyForCount(count) {
+            // 300+
+            if (count >= 300) return 'c301plus';
+            // 299
+            if (count === 299) return 'm40';
+            // 281-298
+            if (count >= 281) return 'c281_299';
+            // 280: milestone sound
+            if (count === 280) return 'm50';
+            // 257-279: ２ E~ 04191253.2.wav
+            if (count >= 257) return 'c257_259';
+            // 250-256 sequence
+            if (count === 256) return 'c257';
+            if (count === 255) return 'c256';
+            if (count === 254) return 'c254';
+            if (count === 253) return 'c253';
+            if (count === 252) return 'c252';
+            if (count === 251) return 'c251';
+            if (count === 250) return 'c250';
+
+            const milestone = getMilestoneType(count);
+            if (milestone === 50) return 'm50';
+            if (milestone === 40) return 'm40';
+            if (milestone === 30) return 'm30';
+            if (count % SPECIAL_EVERY === 0) return 'special';
+            return 'normal';
+        }
+
+        function playPreparedSound(key) {
+            const context = ensureAudioContext();
+            const buffer = audioBuffers[key];
+            if (buffer && context.state === 'running') {
+                const source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                source.start(0);
+                return Promise.resolve();
+            }
+
+            const audio = audioElements[key] || audioElements.normal;
+            audio.currentTime = 0;
+            return audio.play();
+        }
+
+        // 音声再生
+        function playSound(showHitImage) {
+            const now = Date.now();
+            if (now - lastPlayTime < CLICK_COOLDOWN_MS) return; // クールダウン
+            lastPlayTime = now;
+
+            isPlaying = true;
+
+            // UI更新
+            playCount++;
+            playCountElement.textContent = playCount;
+            updateBackgroundScale(playCount);
+            applyBackgroundImage();
+
+            if (showHitImage) {
+                catImage.src = getTapImageForCount(playCount);
+            }
+            catImage.classList.add('playing');
+
+            // 音声再生
+            try {
+                const soundKey = getSoundKeyForCount(playCount);
+                playPreparedSound(soundKey).catch(error => {
+                    console.log('音声再生失敗、合成音を使用:', error);
+                    createSyntheticMeow();
+                });
+            } catch (error) {
+                console.log('音声再生エラー、合成音を使用:', error);
+                createSyntheticMeow();
+            }
+
+            // アニメーション終了
+            if (playingResetTimer) {
+                clearTimeout(playingResetTimer);
+            }
+            const isMilestone30_40_50 = [30, 40, 50].includes(getMilestoneType(playCount));
+            const resetDelay = (showHitImage && isMilestone30_40_50) ? MILESTONE_IMAGE_MS : PLAY_LOCK_MS;
+            playingResetTimer = setTimeout(() => {
+                catImage.classList.remove('playing');
+                if (showHitImage) {
+                    applyIdleCatImage();
+                }
+                isPlaying = false;
+                playingResetTimer = null;
+            }, resetDelay);
+        }
+
+        // 合成音作成（Web Audio API）
+        function createSyntheticMeow() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.3);
+
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch (error) {
+                console.log('合成音生成失敗:', error);
+            }
+        }
+
+        // イベントリスナー: pointerdown優先、clickはフォールバック
+        catButton.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            lastPointerCatAt = Date.now();
+            ensureAudioContext();
+            registerTap(lastPointerCatAt);
+            playSound(true);
+        }, { passive: false });
+
+        catButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (Date.now() - lastPointerCatAt < 120) return;
+            registerTap(Date.now());
+            playSound(true);
+        });
+
+        // 初期化
+        applyBackgroundImage();
+        applyIdleCatImage();
+        renderTimeAttack(Date.now());
+        preloadAudioBuffers();
+        console.log('🐱 猫サンプラー (Pure HTML版) 初期化完了');
+    </script>
+</body>
+</html>

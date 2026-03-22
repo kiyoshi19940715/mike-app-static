@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>猫の鳴き声サンプラー</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .main-container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1rem;
+            overflow: hidden;
+        }
+
+        .bg-image {
+            position: absolute;
+            inset: 0;
+            z-index: -20;
+            background-image: url('/IMG_2813.jpg');
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.2s ease;
+        }
+
+        .bg-image.playing {
+            transform: scale(1.02);
+        }
+
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: -10;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 900;
+            text-align: center;
+            color: #0c4a6e;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            color: rgba(12, 74, 110, 0.9);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 36rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+            background: rgba(255, 255, 255, 0.0);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(30, 41, 59, 0.28);
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .cat-button {
+            outline: none;
+            position: relative;
+            z-index: 10;
+            background: transparent;
+            border: 2px dashed transparent;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-width: 280px;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+
+        .cat-image {
+            pointer-events: none;
+            user-select: none;
+            width: 16rem;
+            height: 16rem;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 4px solid #0ea5e9;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.35));
+            transition: all 0.2s ease;
+        }
+
+        .cat-image.playing {
+            transform: scale(1.05) rotate(1deg);
+        }
+
+        .cat-image.milestone {
+            transform: scale(1.08);
+        }
+
+        .cat-name {
+            color: #0c4a6e;
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+
+        .buttons {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            color: white;
+            touch-action: manipulation;
+            font-size: 1rem;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-blue {
+            background-color: #0ea5e9;
+        }
+
+        .btn-blue:hover {
+            background-color: #0284c7;
+        }
+
+        .btn-pink {
+            background-color: #ec4899;
+        }
+
+        .btn-pink:hover {
+            background-color: #db2777;
+        }
+
+        .stats-container {
+            width: 100%;
+            border-radius: 1rem;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            padding: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+        }
+
+        .play-count {
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .recent-label {
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        .history-list {
+            margin-top: 0.25rem;
+        }
+
+        .history-item {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+            color: #e2e8f0;
+        }
+
+        .footer {
+            margin-top: 1.5rem;
+            color: rgba(12, 74, 110, 0.6);
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .cat-image {
+                width: 20rem;
+                height: 20rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .cat-button {
+                min-width: 240px;
+                min-height: 240px;
+            }
+
+            .cat-image {
+                width: 14rem;
+                height: 14rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="bg-image"></div>
+        <div class="bg-overlay"></div>
+
+
+        <h1>猫の鳴き声サンプラー</h1>
+        <p class="subtitle">クリックでダミー鳴き声を鳴らせます</p>
+
+        <div class="app-container">
+            <button id="cat-button" class="cat-button">
+                <img id="cat-image" class="cat-image" src="/cat_wig.png" alt="ウィッグ猫">
+            </button>
+
+            <div id="cat-name" class="cat-name">ウィッグ猫</div>
+
+            <div class="buttons">
+                <button id="nyaa-btn" class="btn btn-blue">にゃー</button>
+                <button id="switch-btn" class="btn btn-pink">猫を切替</button>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-label">PLAY COUNT</div>
+                <div id="play-count" class="play-count">0</div>
+
+                <div class="recent-label">RECENT</div>
+                <div id="history-list" class="history-list">
+                    <div class="history-item">まだ再生されていません</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Cat Meow Lab</footer>
+    </div>
+
+    <script>
+        // 猫データ
+        const catImages = [
+            "/cat_wig.png",
+            "/cat_plain.svg",
+        ];
+
+        const catPlayingImage = "/cat_hit.png";
+        const milestoneImage30 = "/chika30.jpeg";
+        const milestoneImage40 = "/40.jpg";
+        const milestoneImage50 = "/50.PNG";
+
+        const catNames = ["ウィッグ猫", "素猫"];
+        const catSounds = ["/sounds/cat_custom_pcm.wav", "/sounds/cat_custom_pcm.wav"];
+
+        const specialSound = "/sounds/cat_special_pcm.wav";
+        const sound30 = "/sounds/cat_30_pcm.wav";
+        const sound40 = "/sounds/cat_40_pcm.wav";
+        const sound50 = "/sounds/cat_50_pcm.wav";
+
+        const SPECIAL_EVERY = 10;
+        const HIT_IMAGE_MS = 160;
+
+        // 状態
+        let current = 0;
+        let playing = false;
+        let activePlayingImage = catPlayingImage;
+        let milestonePlaying = false;
+        let lockedUntilEnd = false;
+        let playCount = 0;
+        let history = [];
+        let playSerialRef = 0;
+        let lastPlayTime = 0;
+        let lockStartedAt = 0;
+
+        // DOM要素
+        const catImage = document.getElementById('cat-image');
+        const catName = document.getElementById('cat-name');
+        const playCountElement = document.getElementById('play-count');
+        const historyList = document.getElementById('history-list');
+        const catButton = document.getElementById('cat-button');
+        const nyaaBtn = document.getElementById('nyaa-btn');
+        const switchBtn = document.getElementById('switch-btn');
+        const bgImage = document.querySelector('.bg-image');
+
+        // 音声要素を事前読み込み
+        const fileAudio = catSounds.map((src) => {
+            const audio = new Audio(src);
+            audio.preload = "auto";
+            audio.playsInline = true;
+            return audio;
+        });
+
+        const specialAudio = new Audio(specialSound);
+        specialAudio.preload = "auto";
+        specialAudio.playsInline = true;
+
+        const milestone30Audio = new Audio(sound30);
+        milestone30Audio.preload = "auto";
+        milestone30Audio.playsInline = true;
+
+        const milestone40Audio = new Audio(sound40);
+        milestone40Audio.preload = "auto";
+        milestone40Audio.playsInline = true;
+
+        const milestone50Audio = new Audio(sound50);
+        milestone50Audio.preload = "auto";
+        milestone50Audio.playsInline = true;
+
+        // AudioContextの準備
+        let audioCtx = null;
+
+        function createMeow(type) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const now = audioCtx.currentTime;
+                const gain = audioCtx.createGain();
+                const osc = audioCtx.createOscillator();
+                const lfo = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+
+                osc.type = type === 0 ? "sawtooth" : "triangle";
+                osc.frequency.setValueAtTime(type === 0 ? 480 : 360, now);
+                osc.frequency.exponentialRampToValueAtTime(type === 0 ? 220 : 180, now + 0.28);
+
+                lfo.type = "sine";
+                lfo.frequency.setValueAtTime(type === 0 ? 12 : 8, now);
+                lfoGain.gain.setValueAtTime(type === 0 ? 20 : 14, now);
+
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.22, now + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                lfo.start(now);
+                osc.start(now);
+                lfo.stop(now + 0.36);
+                osc.stop(now + 0.36);
+            } catch (error) {
+                console.log('Web Audio API エラー:', error);
+            }
+        }
+
+
+        function updateHistory() {
+            const timestamp = new Date().toLocaleTimeString("ja-JP");
+            const item = `${catNames[current]}: ${timestamp}`;
+            history.unshift(item);
+            history = history.slice(0, 6);
+
+            historyList.innerHTML = history.length === 0 ?
+                '<div class="history-item">まだ再生されていません</div>' :
+                history.map(item => `<div class="history-item">${item}</div>`).join('');
+        }
+
+        function playSound() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (audioCtx && audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+
+            playSerialRef += 1;
+            const count = playSerialRef;
+            const isMilestone = count % 50 === 0 || count % 40 === 0 || count % 30 === 0;
+
+            let milestoneImage = catPlayingImage;
+            if (count % 50 === 0) milestoneImage = milestoneImage50;
+            else if (count % 40 === 0) milestoneImage = milestoneImage40;
+            else if (count % 30 === 0) milestoneImage = milestoneImage30;
+
+            console.log(`音声再生: ${count}回目 ${isMilestone ? '(マイルストーン!)' : ''}`);
+
+            activePlayingImage = milestoneImage;
+            playing = true;
+            milestonePlaying = isMilestone;
+
+            catImage.src = activePlayingImage;
+            catImage.classList.add('playing');
+            bgImage.classList.add('playing');
+            if (isMilestone) {
+                catImage.classList.add('milestone');
+            }
+
+            let hitTimer;
+            if (!isMilestone) {
+                hitTimer = setTimeout(() => {
+                    playing = false;
+                    milestonePlaying = false;
+                    catImage.src = catImages[current];
+                    catImage.classList.remove('playing', 'milestone');
+                    bgImage.classList.remove('playing');
+                }, HIT_IMAGE_MS);
+            }
+
+            // 音声選択
+            let selectedAudio = null;
+            if (count % 50 === 0) selectedAudio = milestone50Audio;
+            else if (count % 40 === 0) selectedAudio = milestone40Audio;
+            else if (count % 30 === 0) selectedAudio = milestone30Audio;
+            else if (count % SPECIAL_EVERY === 0) selectedAudio = specialAudio;
+            else selectedAudio = fileAudio[current];
+
+            // UIを先に更新
+            playCount++;
+            playCountElement.textContent = playCount;
+            updateHistory();
+
+            if (selectedAudio) {
+                if (isMilestone) {
+                    lockedUntilEnd = true;
+                    lockStartedAt = Date.now();
+                }
+
+                const unlock = () => {
+                    lockedUntilEnd = false;
+                    lockStartedAt = 0;
+                    playing = false;
+                    milestonePlaying = false;
+                    catImage.src = catImages[current];
+                    catImage.classList.remove('playing', 'milestone');
+                    selectedAudio.onended = null;
+                    selectedAudio.onerror = null;
+                };
+
+                if (isMilestone) {
+                    selectedAudio.onended = unlock;
+                    selectedAudio.onerror = unlock;
+                    const fallbackMs = 2500;
+                    setTimeout(unlock, fallbackMs);
+                }
+
+                try {
+                    selectedAudio.pause();
+                    selectedAudio.currentTime = 0;
+                    selectedAudio.volume = 1;
+                    selectedAudio.muted = false;
+
+                    selectedAudio.play().catch((error) => {
+                        console.log('音声ファイル再生失敗、合成音に切替:', error);
+                        if (isMilestone) unlock();
+                        catImage.src = catPlayingImage;
+                        createMeow(current);
+                    });
+                } catch (error) {
+                    console.log('音声設定失敗、合成音に切替:', error);
+                    if (isMilestone) unlock();
+                    catImage.src = catPlayingImage;
+                    createMeow(current);
+                }
+            } else {
+                catImage.src = catPlayingImage;
+                createMeow(current);
+            }
+        }
+
+        function handleCatClick() {
+            const now = Date.now();
+            let isLocked = lockedUntilEnd;
+
+            if (isLocked && (playCount === 0 || lockStartedAt === 0)) {
+                lockedUntilEnd = false;
+                lockStartedAt = 0;
+                isLocked = false;
+            }
+
+            const lockExpired = isLocked && lockStartedAt > 0 && now - lockStartedAt > 2600;
+            if (lockExpired) {
+                lockedUntilEnd = false;
+                lockStartedAt = 0;
+                isLocked = false;
+            }
+
+            if (isLocked) {
+                console.log('タップがブロックされました (ロック中)');
+                return;
+            }
+
+            if (now - lastPlayTime < 50) {
+                console.log('タップがブロックされました (クールダウン中)');
+                return;
+            }
+            lastPlayTime = now;
+
+            playSound();
+        }
+
+        function handleSwitchCat() {
+            current = (current === 0) ? 1 : 0;
+            catImage.src = catImages[current];
+            catImage.alt = catNames[current];
+            catName.textContent = catNames[current];
+        }
+
+        // イベントリスナー
+        catButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleCatClick();
+        }, { passive: false });
+
+        catButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleCatClick();
+        });
+
+        nyaaBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleCatClick();
+        }, { passive: false });
+
+        nyaaBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleCatClick();
+        });
+
+        switchBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleSwitchCat();
+        }, { passive: false });
+
+        switchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleSwitchCat();
+        });
+
+        // 初期化
+        console.log('🐱 猫の鳴き声サンプラー (完全復元版) 初期化完了');
+    </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>タッチテスト</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .test-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            border: 4px solid #45a049;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 0;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .test-button:active {
+            background: #45a049;
+            transform: scale(0.98);
+        }
+
+        .log {
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 20px 0;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .success-message {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .info {
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 モバイルタッチテスト</h1>
+        <div class="info">純粋なHTML/JavaScript - Reactなし</div>
+
+        <div id="success-message" style="display: none;" class="success-message">
+            🎉 JavaScript動作中！タッチ検出成功！
+        </div>
+
+        <button id="test-button" class="test-button">
+            🚨 大型テストボタン 🚨<br>
+            このボタンをタップしてください
+        </button>
+
+        <button id="count-button" class="test-button" style="background: #2196F3; border-color: #1976D2;">
+            📊 カウンターテスト (回数: <span id="count">0</span>)
+        </button>
+
+        <div class="info">
+            ブラウザ: <span id="browser-info"></span><br>
+            タッチサポート: <span id="touch-support"></span><br>
+            画面サイズ: <span id="screen-info"></span>
+        </div>
+
+        <div class="log" id="log">準備中...</div>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('log');
+        let countElement = document.getElementById('count');
+        let successElement = document.getElementById('success-message');
+        let count = 0;
+
+        function addLog(message) {
+            const now = new Date().toLocaleTimeString('ja-JP');
+            const logMessage = `[${now}] ${message}`;
+            console.log(logMessage);
+
+            logElement.innerHTML = logMessage + '\n' + logElement.innerHTML;
+
+            // ログが長くなりすぎないよう制限
+            const lines = logElement.innerHTML.split('\n');
+            if (lines.length > 50) {
+                logElement.innerHTML = lines.slice(0, 50).join('\n');
+            }
+        }
+
+        function showSuccess(message) {
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('DOMContentLoaded - ページ準備完了');
+
+            // ブラウザ情報
+            const ua = navigator.userAgent.toLowerCase();
+            const isSafari = ua.includes('safari') && !ua.includes('chrome');
+            const isChrome = ua.includes('chrome');
+            document.getElementById('browser-info').textContent =
+                isSafari ? 'Safari' : isChrome ? 'Chrome' : 'その他';
+
+            // タッチサポート
+            const touchSupported = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            document.getElementById('touch-support').textContent =
+                touchSupported ? `はい (${navigator.maxTouchPoints}点)` : 'いいえ';
+
+            // 画面情報
+            document.getElementById('screen-info').textContent =
+                `${window.innerWidth}x${window.innerHeight}`;
+
+            addLog(`ブラウザ: ${isSafari ? 'Safari' : isChrome ? 'Chrome' : 'その他'}`);
+            addLog(`タッチサポート: ${touchSupported ? 'はい' : 'いいえ'}`);
+            addLog(`最大タッチポイント: ${navigator.maxTouchPoints}`);
+        });
+
+        // タッチテストボタン
+        document.getElementById('test-button').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            addLog('🟢 touchstart検出');
+            showSuccess('🎉 touchstart成功！');
+        });
+
+        document.getElementById('test-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            addLog('🔵 click検出');
+            showSuccess('🎉 click成功！');
+        });
+
+        // カウンターボタン
+        document.getElementById('count-button').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            count++;
+            countElement.textContent = count;
+            addLog(`📊 カウンター: ${count}`);
+        });
+
+        document.getElementById('count-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            count++;
+            countElement.textContent = count;
+            addLog(`📊 カウンター: ${count}`);
+        });
+
+        // グローバルタッチイベントをリスン
+        document.addEventListener('touchstart', function(e) {
+            addLog('🌐 グローバル touchstart検出');
+        }, { passive: false });
+
+        window.addEventListener('load', function() {
+            addLog('✅ ページ読み込み完了');
+        });
+
+        // エラーハンドリング
+        window.addEventListener('error', function(e) {
+            addLog(`❌ エラー: ${e.message}`);
+        });
+
+        addLog('📱 JavaScript初期化完了');
+    </script>
+</body>
+</html>
